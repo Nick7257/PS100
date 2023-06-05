@@ -24,8 +24,8 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-add_action('tf_create_options', 'cn3_create_options');
-function cn3_create_options()
+add_action('tf_create_options', 'cn3_create_options2');
+function cn3_create_options2()
 {
 
 	$option = TitanFramework::getInstance('cn3');
