@@ -1,1621 +1,1316 @@
-<?php
+<?php 
+// файл функций дочерней темы CityNews 3
+	
+add_action( 'wp_enqueue_scripts', 'enqueue_parent_styles' );
+function enqueue_parent_styles() {
+wp_enqueue_style( 'parent-style', get_template_directory_uri().'/style.css' );
+}
+ 
 
-/**
- * CN3 сет-ап
- */
+// * * * * *  Если нужно добавить код, размещайте его под этой строкой  * * * * *  *// 
 
+// Изменяем приоритет загрузки ядра из дочерней темы
 
-/**
- * Подключаем лицензию, не удаляем эту строчку
- */
-require_once('admin/license.php');
-
-
-if (!defined('VERSION')) {
-	// версия темы
-	define('VERSION', '1.0.1');
+add_action( 'after_setup_theme', 'remove_my_action' );
+function remove_my_action() {
+	remove_action( 'tf_create_options', 'cn3_create_options');
 }
 
-if (!function_exists('theme_support')) :
-	function theme_support() {
-
-		// путь к директории локализации
-		load_theme_textdomain('citynews-3', get_template_directory() . '/languages');
-
-		// ссылки на фиды
-		add_theme_support('automatic-feed-links');
-
-		// title сайта
-		add_theme_support('title-tag');
-
-		// миниатюры  
-		add_theme_support('post-thumbnails');
-
-		// миниатюра в базовом шаблоне записи рубрик и блога
-		add_image_size('post-thumb', 365, 215, true);
-
-		// в разделе Популярные записи
-		add_image_size('popular-thumb', 180, 180, true);
-
-		// поддержка для full и wide align картинок
-		add_theme_support('align-wide');
-
-
-		// меню сайта
-		register_nav_menus(
-			array(
-				'primary' => esc_html__('Главное, а также мобильное многоуровневое меню', 'citynews-3'),
-				'secondary' => esc_html__('Дополнительное одноуровневое меню в подвале в блоке О сайте', 'citynews-3')
-			)
-		);
-
-		/*
-		* Поддержка HTML5
-		*/
-		add_theme_support(
-			'html5',
-			array(
-				'search-form',
-				'comment-form',
-				'comment-list',
-				'gallery',
-				'caption',
-				'style',
-				'script',
-			)
-		);
-
-		// Кастомный фон
-		add_theme_support(
-			'custom-background',
-			apply_filters(
-				'cn3_custom_background_args',
-				array(
-					'default-color' => 'ffffff',
-					'default-image' => '',
-				)
-			)
-		);
-
-		// отключаем блочный редактор виджетов
-		remove_theme_support('widgets-block-editor');
-
-		//адаптивное видео
-		add_theme_support('responsive-embeds');
-
-		// стили для редактора
-		add_theme_support('editor-styles');
-		add_editor_style('style-editor.css');
-
-		/**
-		 * Кастомное лого в режиме превью
-		 */
-		add_theme_support(
-			'custom-logo',
-			array(
-				'height'      => 300,
-				'width'       => 75,
-				'flex-width'  => true,
-				'flex-height' => true,
-			)
-		);
-	}
-
-endif;
-add_action('after_setup_theme', 'theme_support');
-
-
 /**
- * Виджеты
+ * Консоль для управления темой
  */
-function cn3_widgets_init()
+
+if (!defined('ABSPATH')) {
+	exit;
+}
+
+add_action('tf_create_options', 'cn3_create_options');
+function cn3_create_options()
 {
 
-	register_sidebar(
-		array(
-			'name'          => 'Боковая колонка (сайдбар)',
-			'id'            => 'sidebar-1',
-			'description'   => 'Добавьте виджеты.',
-			'before_widget' => '<div id="%1$s" class="widget %2$s">',
-			'after_widget'  => '</div>',
-			'before_title'  => '<span class="widget__title widget-title">',
-			'after_title'   => '</span>',
-		)
-	);
+	$option = TitanFramework::getInstance('cn3');
+	$adminPanel = $option->createAdminPanel(array(
+		'name' => 'CityNews 3',
+	));
 
-	register_sidebar(
-		array(
-			'name'          => 'Подвал (справа)',
-			'id'            => 'footer',
-			'description'   => 'Добавьте виджеты.',
-			'before_widget' => '<div id="%1$s" class="footer__widget widget %2$s">',
-			'after_widget'  => '</div>',
-			'before_title'  => '<span class="widget__title widget-title">',
-			'after_title'   => '</span>',
-		)
-	);
-}
-add_action('widgets_init', 'cn3_widgets_init');
+	$adminPanel->createOption(array(
+		'name' => 'О теме',
+		'type' => 'heading',
+	));
 
+	$adminPanel->createOption(array(
+		'type' => 'note',
+		'desc' => '<img src="/wp-content/themes/citynews-3/screenshot.png" style="width:500px; float:left; margin:0 40px 30px 0" alt="Скриншот темы">
+	<p><br />"CityNews 3" это адаптивная быстрая настроечная тема 2023 года для статейного сайта или блога, развернутого на CMS WordPres.</p><br /><p> Среди опций темы - сетка постов, профили авторов, липкое меню, липкий сайдбар, хлебные крошки, микроразметка schema.org, готовый темный режим, пара встроенных виджетов, а также система оценки публикаций в виде лайков.</p><br /><p>Вы находитесь в консоли темы, где расположены все её настройки. Здесь вы можете установить, как выводить контент на сайте, перекрасить основные части, добавить статистику, социальные сети, включить / отключить разные элементы и т.п.</p>'
+	));
 
-/**
- * Подключением стилей и скриптов
- */
-function theme_scripts()
-{
-	wp_enqueue_style('cn3-style', get_stylesheet_uri(), array(), VERSION);
-	wp_enqueue_script('cn3-dark-theme', get_template_directory_uri() . '/assets/js/dark.js', array('jquery'), VERSION, true);
-	wp_enqueue_script('cn3-vendor-script', get_template_directory_uri() . '/assets/js/vendor.min.js', array('jquery'), VERSION, true);
-	wp_enqueue_script('cn3-custom-script', get_template_directory_uri() . '/assets/js/custom.js', array('jquery'), VERSION, true);
+	$adminPanel->createOption(array(
+		'name' => 'Документация и помощь',
+		'type' => 'heading',
+	));
 
-	if (is_singular() && comments_open() && get_option('thread_comments')) {
-		wp_enqueue_script('comment-reply');
-	}
-}
-add_action('wp_enqueue_scripts', 'theme_scripts');
+	$adminPanel->createOption(array(
+		'type' => 'note',
+		'desc' => '<p>Чтобы изучить все возможности "CityNews 3", ознакомьтесь с инструкцией. Документация предоставлена вместе с темой - скачайте ее в письме, которое получили после покупки. Распакуйте архив doc.zip и откройте файл readme.html при помощи любого браузера. В ней описаны все опции темы, рассказано, что и как настроить. </p><br /><p>Либо можете использовать онлайн-версию:  </p><br />
+		
+		<p><a class="button button-secondary" href="https://www.goodwinpress.ru/documents/cn3/readme.html" target="_blank">Открыть инструкцию</a> </p><br />
+		
+		<p>Для клиентов работает бесплатная техподдержка. Вы получаете ее все время, пока пользуетесь темой. Поддержка предоставляется без выходных, с 10:00 до 21:00 в будни, и с 12:00 до 20:00 в выходные и праздники. Время московское.</p><br />
+		
+		<p><a class="button button-secondary" href="https://www.goodwinpress.ru/contact/" target="_blank">Написать в техподдержку</a> </p><br />'
+	));
 
+	$adminPanel->createOption(array(
+		'name' => 'Другие темы от GoodwinPress:',
+		'type' => 'heading',
+	));
 
-
-/**
- * Функции темы
- */
-require get_template_directory() . '/inc/template-functions.php';
-
-/**
- * Загрузка записей в блоге и архивах через AJAX
- */
-require get_template_directory() . '/inc/ajax-pagination.php';
-
-/**
- * Галочка для добавления в Избранные
- */
-require get_template_directory() . '/inc/metabox/single-metabox.php';
-
-/**
- * Добавление изображений для автора, а также соц сетей автора в профили
- */
-require get_template_directory() . '/inc/metabox/profile-metabox.php';
-
-/**
- * Меняем под себя комментарии и добавляем к ним микроразметку
- */
-require get_template_directory() . '/inc/template-parts/comment-atts.php';
-
-/**
- * Хлебные крошки
- */
-require get_template_directory() . '/inc/template-parts/breadcrumbs.php';
-
-
-/**
- * Встроенный виджет Популярные записи
- */
-require get_template_directory() . '/inc/widgets/popular-posts-widget.php';
-
-/**
- * Встроенный виджет Избранная рубрика
- */
-require get_template_directory() . '/inc/widgets/featured-posts-widget.php';
-
-
-/**
- * Система лайков для записей
- */
-require get_template_directory() . '/inc/vendor/likes.php';
-
-
-/**
- * Оптимизация
- */
-require get_template_directory() . '/inc/optimize.php';
-
-
-/**
- * Обновление темы
- */
-require get_template_directory() . '/admin/plugin-update-checker/plugin-update-checker.php';
-
-
-// проверяем, используется ли сайдбар в записи, для добавления соответствующих стилей
-function is_sidebar_active($index) {
-	global $wp_registered_sidebars;
-	$widgetcolums = wp_get_sidebars_widgets();
-	if ($widgetcolums[$index])
-		return true;
-	return false;
-}
-
-  
-// EOF
-<?php
-
-/*
-Функции темы
-*/
-
+	$adminPanel->createOption(array(
+		'type' => 'note',
+		'desc' => '<p>Если пожелаете приобрести какой-нибудь другой шаблон от GoodwinPress, помните - постоянным клиентам предоставляется скидка 25%.</p>
+<br /><p>
+<a href="https://www.goodwinpress.ru/universalnaya-biznes-tema-make-progress-3/" target="_blank"><img class="panel-img" src="/wp-content/themes/citynews-3/assets/img/demo/mp3.png" width="370" alt="Make Progress 3"></a>
+<a href="https://www.goodwinpress.ru/wp-tema-blogpost-3/" target="_blank"><img class="panel-img" src="/wp-content/themes/citynews-3/assets/img/demo/bp3.jpg" width="370" alt="BlogPost 3"></a>
+<a href="https://www.goodwinpress.ru/wp-tema-law-factory/" target="_blank"><img class="panel-img" src="/wp-content/themes/citynews-3/assets/img/demo/lawfactory.jpg" width="370" alt="Law Factory"></a>
  
-/*
-Фавикон
-*/
-if (!function_exists('add_favicons')) {
-  add_action('gp_header', 'add_favicons');
-  function add_favicons() {
-
-    $option = TitanFramework::getInstance('cn3');
-    $favicon = $option->getOption('favicon');
-
-    if (is_numeric($favicon)) {
-      $imageAttachment = wp_get_attachment_image_src($favicon, $size = 'full', $icon = false);
-      $imageSrc = $imageAttachment[0];
-    } else {
-      $imageSrc = $favicon;
-    }
-
-?>
-
-    <link rel="icon" type="image/x-icon" href="<?php echo esc_url($imageSrc); ?>">
-    <link rel="apple-touch-icon" href="<?php echo esc_url($imageSrc); ?>">
-    <link rel="apple-touch-icon" sizes="76x76" href="<?php echo esc_url($imageSrc); ?>">
-    <link rel="apple-touch-icon" sizes="192x192" href="<?php echo esc_url($imageSrc); ?>">
-    <link rel="apple-touch-startup-image" href="<?php echo esc_url($imageSrc); ?>">
-
-    <?php
-  }
-}
-
-
-/* 
-Cтатистика Гугл и пиксели 
-*/
-if (!function_exists('add_stat_tools')) {
-  add_action('gp_header', 'add_stat_tools');
-  function add_stat_tools () {
-
-    $option = TitanFramework::getInstance('cn3');
-
-    // статистика Google analytics, если есть
-    $analytics = $option->getOption('google-stat');
-
-    // код верификации сайта, если есть
-    $verification = $option->getOption('verification');
-
-    // пиксели Facebook или ВКонтакте, если есть
-    $pixel = $option->getOption('pixel');
-
-
-    // Google Analytics
-    if ($analytics) {
-      echo $analytics;
-    }
-
-    //верификация сайта
-    if ($verification) {
-      echo $verification;
-    }
-
-    //выводим пиксель вконтакте или facebook'a, если есть
-    if ($pixel) {
-      echo $pixel;
-    }
-  }
-}
-
-/* 
-Изображение записи для расшаривания и предзагрузки
-*/
-
-if ( ! function_exists( 'add_og_imgs' ) ) {
-  add_action('gp_header', 'add_og_imgs');
-    function add_og_imgs() {
-
-     if (has_post_thumbnail() ) {  
-
-      $attachment_image = wp_get_attachment_url( get_post_thumbnail_id() );
-
-      echo '<meta property="og:image" content="' . esc_attr( $attachment_image ) . '">';
-      echo '<link rel="preload" as="image" href="' . esc_url( $attachment_image ) . '">';
-
-     }
-   }
- }
-
-/*
-Текстовый заголовок в шапке
-*/
-if (!function_exists('add_header_title')) {
-  add_action('gp_header', 'add_header_title');
-  function add_header_title() {
-    $site_name = get_bloginfo('name');
-
-    if (is_front_page()) { ?>
-      <h1 class="site-title">
-        <a class="site-title__link" href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($site_name); ?>
-        </a>
-      </h1>
-    <?php } else { ?>
-      <span class="site-title">
-        <a class="site-title__link" href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($site_name); ?>
-        </a>
-      </span>
-    <?php
-    }
-  }
-}
-
-
-/*
-Логотип в шапке
-*/
-if (!function_exists('add_header_logo')) {
-  add_action('gp_header', 'add_header_logo');
-  function add_header_logo() {
-
-    $option = TitanFramework::getInstance('cn3');
-    
-    // лого для светлого режима
-    $logo_img = $option->getOption('site-logo');
-
-    // лого для темного режима
-    $logo_dark = $option->getOption('site-logo-dark');
-
-    // ширина и высота svg лого
-    $svgLogoWidth = $option->getOption('svg-logo-width');
-    $svgLogoHeight = $option->getOption('svg-logo-height');
-
-    $site_name = get_bloginfo('name');
-
-    if (is_numeric($logo_img)) {
-      $imageAttachment = wp_get_attachment_image_src($logo_img, $size = 'full', $icon = false);
-      $imageSrc = $imageAttachment[0];
-      $width = $imageAttachment[1];
-      $height = $imageAttachment[2];
-    } else {
-      // лого по умолчанию
-      $imageSrc = $logo_img;
-      $width = 265;
-      $height = 65;
-    }
-
-    if ($logo_dark) {
-      if (is_numeric($logo_dark)) {
-        $imageAttachment2 = wp_get_attachment_image_src($logo_dark, $size = 'full', $icon = false);
-        $imageSrc2 = $imageAttachment2[0];
-        $width = $imageAttachment2[1];
-        $height = $imageAttachment2[2];
-      } else {
-        $imageSrc2 = $logo_dark;
-      }
-    }
-    
-    if ($svgLogoWidth) :
-      $width = $svgLogoWidth;
-    endif;
-
-      if ($svgLogoHeight) :
-        $height = $svgLogoHeight;
-      endif;
-    ?>
-
-    <a class="site-title__link" href="<?php echo esc_url(home_url('/')); ?>">
-      <img class="site-title__logo light-mod-logo" 
-      src="<?php echo esc_url($imageSrc); ?>" 
-      alt="<?php echo esc_attr($site_name); ?>" 
-      width="<?php echo esc_attr($width); ?>" height="<?php echo esc_attr($height); ?>">
-
-      <?php if ($logo_dark) : ?>
-
-        <img class="site-title__logo dark-mode-logo" 
-        src="<?php echo esc_url($imageSrc2); ?>" 
-        alt="<?php echo esc_attr($site_name); ?>" 
-        width="<?php echo esc_attr($width); ?>" height="<?php echo esc_attr($height); ?>">
-
-      <?php endif;  ?>
-    </a>
-
-    <?php
-    // если выбран логотип, добавим к нему заголовок h1
-    if (is_front_page()) : ?>
-      <h1 class="screen-reader-text"><?php echo esc_html($site_name); ?></h1>
-    <?php endif; ?>
-
-  <?php
-  }
-}
-
-
-/*
-Переключатель darkmode
-*/
-if (!function_exists('add_darkmode_switch')) {
-  add_action('gp_header', 'add_darkmode_switch');
-  function add_darkmode_switch() { ?>
-
-    <div class="theme-switch">
-      <label class="switch"><input type="checkbox" class="gp-checkbox" aria-label="<?php echo _e('Изменить режим - светлый или темный', 'citynews-3'); ?>"></label>
-    </div>
-
-    <?php
-  }
-}
-
- 
-/*
-Десктопное меню 
-Для экономии ресурсов, используется также как моб меню
-*/
-if (!function_exists('add_main_menu')) {
-  add_action('gp_nav', 'add_main_menu');
-  function add_main_menu() {
-    $menu = wp_nav_menu(array(
-      'theme_location' => 'primary',
-      'container' => '',
-      'container_class' => '',
-      'menu_class' => 'nav-menu',
-      'link_before'   => '<span itemprop="name">',
-      'link_after'   => '</span>',
-      'fallback_cb' => '',
-    ));
-    echo strip_tags($menu, '<ul><li><a>');
-  }
-}
-
-
-/*
-Доп. меню в подвале
-*/
-if (!function_exists('add_footer_menu')) {
-  add_action('gp_footer', 'add_footer_menu');
-  function add_footer_menu() {
-    $menu = wp_nav_menu(array(
-      'theme_location' => 'secondary',
-      'container' => '',
-      'container_class' => '',
-      'menu_class' => 'footer-menu',
-      'fallback_cb' => '',
-    ));
-    echo strip_tags($menu, '<ul><li><a>');
-  }
-}
-
-
-/*
-Панель мобильного меню 
-*/
-if (!function_exists('add_mobile_menu')) {
-  add_action('gp_footer', 'add_mobile_menu');
-  function add_mobile_menu() { 
-    ?>
-
-    <div class="mobile-nav-panel">
-
-      <nav class="mobile-nav" itemscope itemtype="http://www.schema.org/SiteNavigationElement">
-        <?php 
-        // моб меню
-          add_main_menu(); 
-        ?>
-      </nav>
-
-      <button class="mobile-nav-panel__close" aria-label="<?php echo _e('Закрыть мобильное меню', 'citynews-3'); ?>"></button>
-
-    </div><!-- // mobile-nav-panel -->
-
-    <div class="mobile-overlay"></div>
-
-    <?php
-  }
-}
-
-
-
-/*
-Текстовый анонс
-*/
-if (!function_exists('add_text_anons')) {
-  add_action('gp_content', 'add_text_anons');
-  function add_text_anons($count) {
-    $content = get_the_content();
-    $trimmed_content = wp_trim_words($content, $count, '...');
-    return $trimmed_content;
-  }
-}
-
-
-/*
-Расчет чтения
-*/
-if (!function_exists('gp_read_time')) {
-  function gp_read_time() {
-    $text = get_the_content('');
-    $words = str_word_count(strip_tags($text), 0, 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ');
-    if (!empty($words)) {
-      $time_in_minutes = ceil($words / 200);
-      return $time_in_minutes;
-    }
-    return false;
-  }
-}
-
-
-/*
-Аватар / фото автора
-*/
-if (!function_exists('get_author_foto')) {
-  function get_author_foto() {
-    global $post;
-    $author_img = get_avatar_url($post, "size=46");
-    $custom_img = get_the_author_meta('foto');
-    // если нет локального фото, берем из gravatar.com
-    $img_url = empty($custom_img) ? $author_img : $custom_img;
-
-    return $img_url;
-  }
-}
-
-
-/*
-Шапка в шаблоне записи
-*/
-if (!function_exists('add_post_header')) {
-  add_action('gp_content', 'add_post_header');
-  function add_post_header() {
-   
-    $option = TitanFramework::getInstance('cn3');
-
-    // включен ли блок с автором и датой
-    $postDateAuthor = $option->getOption('single-date-author-loc');
-
-    // показывать время на чтение
-    $postReading = $option->getOption('single-reading-loc');
-
-    // показывать количество комментариев
-    $postCommCount = $option->getOption('single-comments-loc');
-
-    // показывать лайки в шапке
-    $postHeaderLikes = $option->getOption('single-like-loc');
-
-    // id автора
-    $author_id = get_the_author_meta('ID');
-    // фото / аватар автора
-    $img_url = get_author_foto();
-    // ссылка на архив автора
-    $author_link = get_the_author_posts_link();
-    // дата публикации 
-    $date = get_the_date('d F Y');
-
-  ?>
-    <div class="post-info">
-
-      <?php
-      if ($postDateAuthor) :
-      ?>
-
-        <div class="post-info__author">
-
-          <div class="post-info__img">
-            <a href="<?php echo esc_url(get_author_posts_url($author_id)); ?>">
-              <img src="<?php echo esc_url($img_url); ?>" alt="<?php the_author(); ?>" width="46" height="46">
-            </a>
-          </div><!-- // post-info__img -->
-
-          <div class="post-info__about">
-
-            <?php
-            printf('<span class="post-info__name">' . $author_link . '</span>');
-            ?>
-
-
-            <?php
-            printf('<span class="post-info__date">' . esc_html($date) . '</span>');
-            ?>
-
-          </div><!-- // post-info__about -->
-        </div><!-- // post-info__author -->
-
-      <?php endif; ?>
-
-      <div class="post-info__wrap">
-
-        <?php
-        if ($postReading) :
-        ?>
-
-          <span class="post-info__reading reading-time">
-            <svg class="reading-time__icon">
-              <use xlink:href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/img/sprite.svg#clock"></use>
-            </svg>
-
-            <?php _e('На чтение', 'citynews-3'); ?>:
-            <?php plural_form(
-              gp_read_time(),
-              array('минута', 'минуты', 'минут')
-            );
-            ?>
-          </span>
-
-        <?php endif; ?>
-
-        <?php 
-          if (comments_open()) : 
-        ?>
-
-          <?php
-          if ($postCommCount) {
-          ?>
-
-            <span class="post-info__comments comments-info">
-            <svg class="comments-info__icon">
-              <use xlink:href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/img/sprite.svg#comments"></use>
-            </svg>
-              <!--noindex-->
-              <a href="#comments" rel="nofollow" class="post-info__link">
-                <?php
-                  plural_form(
-                    get_comments_number(),
-                    array(
-                      __('комментарий', 'citynews-3'), 
-                      __('комментария', 'citynews-3'), 
-                      __('комментариев', 'citynews-3'),
-                    )
-                  );
-                ?>
-              </a>
-              <!--/noindex-->
-            </span>
-          <?php } ?>
-
-        <?php endif; ?>
-
-        <?php
-          if ($postHeaderLikes) :
-        ?>
-
-          <div class="post-info__likes post-info-likes">
-            <span class="post-info-likes__title"><?php _e('Нравится', 'citynews-3'); ?>:</span>
-
-            <?php
-              // показываем лайки
-              echo get_simple_likes_button(get_the_ID()); 
-            ?>
-
-          </div><!--// post-info__likes -->
-
-          <?php endif; ?>
-
-          </div><!--// post-info__wrap -->
-
-        <div class="post-info-ellipses__wrap">
-          <svg>
-            <use xlink:href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/img/sprite.svg#ellipses"></use>
-          </svg>
-        </div>
-
-    <div class="post-info-mobile"></div>
-
-    </div><!--// post-info -->
-
-  <?php
-  }
-}
-
-
-/*
-Подвал в шаблоне записи
-*/
-if (!function_exists('add_post_footer')) {
-  add_action('gp_content', 'add_post_footer');
-  function add_post_footer( ) {
-
-    $option = TitanFramework::getInstance('cn3');
-    // показывать метки
-    $postTags = $option->getOption('single-tags-loc');
-
-    // показывать кнопки поделиться
-    $postSharing = $option->getOption('single-social-loc');
-
-    // показывать кнопки поделиться
-    $postFooterLikes = $option->getOption('single-footer-like-loc');
-
-  ?>
-
-    <div class="single-post__footer post-footer">
-
-      <?php if (!empty($custom_descr)) : ?>
-        <div class="single-post__custom">
-          <?php
-          // произвольный контент в подвале
-          echo $custom_descr;
-          ?>
-        </div><!-- // single-post__custom -->
-      <?php endif; ?>
-
-      <?php
-      // метки, если включены
-      if ($postTags) :
-        if (has_tag()) {
-          echo '<div class="single-post__tags">';
-          the_tags('', '');
-          echo '</div>';
-        }
-      endif;
-      ?>
-
-      <div class="post-footer__wrap">
-        <?php
-        // кнопки Поделиться, если включены
-        if ($postSharing) :
-          get_template_part('inc/socials/share-btns');
-        endif;
-        ?>
-
-        <?php
-        // лайки в подвале, если включены
-        if ($postFooterLikes) : ?>
-
-          <div class="post-info-likes">
-            <span class="post-info-likes__title"><?php _e('Нравится', 'citynews-3'); ?>:</span>
-            <?php echo get_simple_likes_button(get_the_ID()); ?>
-          </div><!--// post-info__likes -->
-        <?php endif; ?>
-
-      </div><!-- // post-footer__wrap -->
-    </div><!-- // single-post__footer -->
-
-  <?php
-  }
-}
-
-
-/*
-Получаем имя рубрики из её id для шапки рубрик
-*/
-function cat_id_to_name($id) {
-  foreach ((array)(get_categories()) as $category) {
-    if ($id == $category->cat_ID) {
-      return $category->cat_name;
-    }
-  }
-}
-
-/*
-Подвал записей в базовом шаблоне рубрик
-*/
-if (!function_exists('add_item_footer')) {
-  add_action('gp_content', 'add_item_footer');
-  function add_item_footer() {
-    $date = get_the_date('d F Y');
-  ?>
-
-    <div class="item__footer item-footer">
-      <?php printf('<span class="item-footer__info">' . esc_html($date) . '</span>'); ?>
-
-      <?php echo get_simple_likes_button(get_the_ID()); ?>
-    </div>
-
-  <?php
-  }
-}
-
-/*
-Изображение в фоне записей рубрики 1 и избранных записей
-*/
-if (!function_exists('add_item_bg')) {
-  add_action('gp_images', 'add_item_bg');
-  function add_item_bg() {
-    if (has_post_thumbnail()) :
-      $thumb = get_post_thumbnail_id();
-      $img_url = wp_get_attachment_url($thumb, 'home-cat-thumb');
-      echo 'style="background-image: url(' . esc_url($img_url) . ');"';
-    endif;
-  }
-}
-
-
-/*
-Шаблон записи в рубрике 1
-*/
-if (!function_exists('add_topcat_items')) {
-  add_action('gp_topcat', 'add_topcat_items');
-  function add_topcat_items() { ?>
-
-    <li class="top-section__item">
-      <article class="top-section-article" <?php add_item_bg(); ?>>
-        <div class="top-section-article__caption">
-          <?php
-            // заголовок
-            the_title(sprintf('<h3 class="top-section-article__title"><a class="top-section-article__link hover-bottom-border" href="%s">', esc_url(get_permalink())), '</a></h3>');
-          ?>
-
-          <?php
-            // подвал записи
-            add_item_footer();
-          ?>
-        </div><!-- // item__caption -->
-      </article><!-- // top-section-article -->
-    </li><!-- // item -->
-
-  <?php
-  }
-}
-
-
-/*
-Шапка рубрики
-*/
-if (!function_exists('add_cat_header')) {
-  add_action('gp_cats', 'add_cat_header');
-  function add_cat_header($cat_id) {
-  ?>
-
-    <div class="cat-header">
-      <div class="cat-header__wrap">
-        <h2 class="cat-header__title">
-          <a class="cat-header__link" href="<?php echo get_category_link($cat_id); ?>">
-            <?php echo cat_id_to_name($cat_id); ?>
-          </a>
-        </h2>
-      </div><!-- // cat-header__wrap -->
-
-      <a class="cat-header__more" href="<?php echo get_category_link($cat_id); ?>" aria-label="<?php _e('Посмотреть все записи в этой рубрике', 'citynews-3'); ?>">
-        <svg>
-          <use xlink:href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/img/sprite.svg#arrow-next"></use>
-        </svg>
-      </a>
-    </div>
-    <!--// cat header -->
-
-  <?php
-  }
-}
-
-
-/*
-Шаблон записей категории на главной
-*/
-if (!function_exists('add_cats_items')) {
-  add_action('gp_cats', 'add_cats_items');
-  function add_cats_items() {
-  ?>
-
-    <li class="home-category-list__item">
-      <article class="home-category-item">
-
-        <?php if(has_post_thumbnail()): ?>
-          <div class="home-category-item__img zoom-img">
-            <a href="<?php echo esc_url(get_permalink()); ?>">
-              <?php
-                the_post_thumbnail('post-thumb', array(
-                  'alt' => the_title_attribute(array(
-                    'echo' => false,
-                  )),
-                ));
-              ?>
-            </a>
-          </div>
-          <?php endif; ?>
-
-          <div class="home-category-item__content">
-            <?php the_title(sprintf('<h3 class="home-category-item__title"><a class="home-category-item__link" href="%s">', esc_url(get_permalink())), '</a></h3>'); ?>
-
-            <?php
-            // если нет миниатюры, выводим короткий анонс
-            if( ! has_post_thumbnail()): ?>
-            <div class="home-category-item__text"><?php echo add_text_anons(20); ?></div>
-            <?php endif; ?>
-          </div>
-          <?php add_item_footer(); ?>
-          
-      </article>
-    </li>
-
-  <?php
-  }
-}
-
-
-
-/* 
-Карточки авторов на Главной
-*/
-if (!function_exists('add_author_card')) {
-  add_action('gp_authors', 'add_author_card');
-  function add_author_card($user) {
-
-    // получаем id автора
-    $user_id =  $user->ID;
-
-    $gravatar = get_avatar_url($user_id, "size=80");
-    $custom_img = get_the_author_meta('foto',  $user_id);
-    // если нет кастомного локального фото, берем из gravatar.com
-    $img_url = empty($custom_img) ? $gravatar : $custom_img;
-    // декоративная картинка для фона
-    $bg_img = get_the_author_meta('fotobg',  $user_id);
-
-  ?>
-
-    <li class="authors-list__item authors-item">
-
-      <a href="<?php echo esc_url(get_author_posts_url($user_id)); ?>" class="authors-item__link">
-
-        <div class="authors-item__bg" style="background-image:url('<?php echo esc_url($bg_img); ?>')">
-          <div class="authors-item__post-count">
-            <span class="authors-item__icon">
-              <svg>
-                <use xlink:href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/img/sprite.svg#pen"></use>
-              </svg>
-            </span>
-            <p><?php echo count_user_posts($user_id); ?></p>
-          </div>
-          <img loading="lazy" class="authors-item__img" src="<?php echo esc_url($img_url); ?>" alt="<?php the_author_meta('display_name', $user_id); ?>">
-        </div>
-
-        <div class="authors-item__content">
-          <span class="authors-item__name"><?php the_author_meta('display_name', $user_id); ?></span>
-          <p class="authors-item__descr">
-            <?php $descr = get_the_author_meta('user_description', $user_id);
-            echo esc_html($descr);
-            ?>
-          </p>
-        </div><!-- //  authors-item__content -->
-      </a>
-    </li><!-- // authors-list__item -->
-
-  <?php
-  }
-}
-
-
-/* 
-Шаблон популярных записей
-*/
-if (!function_exists('add_popular_items')) {
-  add_action('gp_popular', 'add_popular_items');
-  function add_popular_items() { ?>
-
-    <li class="popular-list__item">
-      <article class="popular-item">
-        <div class="popular-item__img zoom-img">
-          <a href="<?php echo esc_url(get_permalink()); ?>">
-            <?php
-            // миниатюра
-            the_post_thumbnail('popular-thumb', array(
-              'alt' => the_title_attribute(
-                array('echo' => false)
-              ),
-            ));
-            ?>
-          </a>
-        </div>
-
-        <div class="popular-item__content">
-          <span class="popular-item__cats">
-            <?php
-            // рубрика записи
-            add_popular_term();
-            ?>
-          </span>
-
-          <?php
-          // заголовок
-          the_title(sprintf('<h3 class="popular-item__title"><a class="popular-item__link" href="%s">', esc_url(get_permalink())), '</a></h3>');
-          ?>
-
-          <?php
-          // подвал в ячейках популярных записей
-          add_popular_footer(); ?>
-
-        </div><!-- popular-item__content -->
-      </article><!-- popular-item__content -->
-    </li>
-
-  <?php
-  }
-}
-
-
-/* 
-Карточка в блоке Избранные записи
-*/
-if (!function_exists('add_featured_items')) {
-  add_action('gp_featured', 'add_featured_items');
-  function add_featured_items() { ?>
-
-    <li class="feat-posts__item">
-      <article class="feat-article">
-        <div class="feat-article__wrapper" <?php add_item_bg(); ?>>
-          <div class="feat-article__caption">
-
-            <?php
-              // заголовок
-              the_title(sprintf('<h3 class="feat-article__title"><a class="feat-article__link hover-bottom-border" href="%s">', esc_url(get_permalink())), '</a></h3>');
-            ?>
-
-            <?php
-            // стандартный подвал ячейки
-            add_item_footer();
-            ?>
-
-          </div><!-- // item__caption -->
-        </div><!-- // item__wrapper -->
-      </article>
-    </li>
-
-  <?php
-  }
-}
-
-
-/* 
-Кнопка загрузки записей через ajax
-*/
-if (!function_exists('add_load_more_btn')) {
-  add_action('gp_blog', 'add_load_more_btn');
-  function add_load_more_btn() {
-
-    global $wp_query;
-    if ($wp_query->max_num_pages > 1)
-      echo '<button class="load-more-posts" aria-label="' . __('Нажмите, чтобы загрузить больше записей', 'citynews-3') . '">' . __('Загрузить еще', 'citynews-3') . '</button>';
-  }
-}
-
-
-/* 
-Стандартная постраничная навигация с цифрами
-*/
-if (!function_exists('add_page_nav')) {
-  add_action('gp_blog', 'add_page_nav');
-  function add_page_nav() {
-    $pagenav = get_the_posts_pagination(array(
-      'mid_size' => 2,
-      'prev_text' => __('Назад', 'citynews-3'),
-      'next_text' => __('Вперёд', 'citynews-3'),
-      'screen_reader_text' => __('Навигация', 'citynews-3')
-    ));
-    $pagenav = str_replace('<h2 class="screen-reader-text">' . __('Навигация', 'citynews-3') . '</h2>', '', $pagenav);
-    $pagenav = str_replace('role="navigation"', '', $pagenav);
-    echo $pagenav;
-  }
-}
-
-
-/* 
-Изображение внутри записи 
-*/
-if (!function_exists('add_single_thumbnail')) {
-  add_action('gp_content', 'add_single_thumbnail');
-  function add_single_thumbnail() {
-    if (has_post_thumbnail()) :
-      $thumb = get_post_thumbnail_id();
-      $image_attributes = wp_get_attachment_image_src($thumb, 'full');
-      echo '<figure class="single-post__img"><img src="' . $image_attributes[0] . '" alt="' . get_the_title() . '" width="' . $image_attributes[1] . '" height="' . $image_attributes[2] . '"></figure>';
-    endif;
-  }
-}
-
-
- 
-/* 
-Навигация внутри записей
-*/
-if (!function_exists('add_navigation')) {
-  add_action('gp_service', 'add_navigation');
-  function add_navigation() {
-
-    if (is_singular('post')) {
-      $next_label     = esc_html__('Следующая запись', 'citynews-3');
-      $previous_label = esc_html__('Предыдущая запись', 'citynews-3');
-    }
-
-    the_post_navigation(
-      array(
-        'next_text' => '<span class="nav-links__label">' . $next_label .   '</span><p class="nav-links__title">%title</p>',
-        'prev_text' => '<span class="nav-links__label">' .  $previous_label . '</span><p class="nav-links__title">%title</p>',
-      )
-    );
-  }
-}
-
-
-/* 
-Похожие записи (из той же рубрики) 
-*/
-if (!function_exists('add_related_posts')) {
-  add_action('gp_posts', 'add_related_posts');
-  function add_related_posts() {
-
-    $option = TitanFramework::getInstance('cn3');
-
-    // включен ли подвал в ячейках похожих записей
-    $postRelatedFooter = $option->getOption('related-footer-loc');
-
-    // количество похожих записей 
-    $postRelatedCount = $option->getOption('related-posts-count');
-
-    $current_id = get_the_ID();
-    $categories = get_the_category();
-    $cat_id = $categories[0]->cat_ID;
-    $cat_name = $categories[0]->cat_name;
-
-    $date = get_the_date('d F');
-    $like_count = get_post_meta(get_the_ID(), '_post_like_count', true);
-  ?>
-
-    <div class="related-posts">
-      <ul class="related-posts__list related-posts-list">
-
-        <?php
-        $query = new WP_Query(array('cat' => $cat_id, 'showposts' => $postRelatedCount,  'orderby' => 'date',  'post__not_in' => array($current_id), 'ignore_sticky_posts' => 1));
-        while ($query->have_posts()) : $query->the_post(); ?>
-
-          <li class="related-posts-list__item">
-            <span class="related-posts-item__cats">
-              Еще из&nbsp; «<?php echo esc_html($cat_name); ?>»
-            </span>
-
-            <?php
-              // заголовок
-              the_title(sprintf('<span class="related-posts-item__title"><a class="popular-item__link" href="%s">', esc_url(get_permalink())), '</a></span>');
-            ?>
-
-            <?php
-              if (!$postRelatedFooter) :
-            ?>
-
-              <div class="popular-footer">
-                <span class="popular-footer__date"><?php echo esc_html($date); ?></span>
-                <?php 
-                  // показываем лайки
-                  echo get_simple_likes_button(get_the_ID()); 
-                ?>
-              </div>
-
-            <?php endif; ?>
-
-          </li>
-
-        <?php
-        endwhile;
-        wp_reset_postdata();
-        ?>
-
-      </ul><!--// related-posts__list -->
-    </div> <!--// related-posts -->
-
-  <?php
-  }
-}
-
-
-/* 
-Несколько случайных записи 
-*/
-if (!function_exists('add_random_posts')) {
-  add_action('gp_posts', 'add_random_posts');
-  function add_random_posts() {
-
-    $option = TitanFramework::getInstance('cn3');
-    
-    // включен ли подвал в ячейках случайных записей
-    $postRandomFooter = $option->getOption('random-footer-loc');
-
-    $current_id = get_the_ID();
-  ?>
-
-    <ul class="blog-content__random random-list">
-      <?php
-      $query = new WP_Query(array('showposts' => 4,  'ignore_sticky_posts' => 1, 'post__not_in' => array($current_id),  'orderby' => 'rand'));
-      while ($query->have_posts()) : $query->the_post();
-      ?>
-
-        <li class="random-list__item random-item">
-
-          <div class="random-item__wrapper" <?php add_item_bg(); ?>>
-            <span class="random-item__label"><?php _e('Что еще почитать', 'citynews-3'); ?></span>
-            <div class="random-item__caption">
-              <?php
-                // заголовок
-                the_title(sprintf('<span class="random-item__title"><a class="random-item__link hover-bottom-border" href="%s">', esc_url(get_permalink())), '</a></span>');
-              ?>
-
-              <?php
-              // подвал ячейки
-              if (!$postRandomFooter) :
-                add_item_footer();
-              endif;
-              ?>
-            </div><!-- // random-item__caption -->
-          </div><!-- // random-item__wrapper -->
-        </li><!-- // random-item -->
-
-      <?php
-        endwhile;
-        wp_reset_postdata();
-      ?>
-    </ul><!-- // blog-content__random -->
-
-  <?php
-  }
-}
-
-
-/* 
-Выводим  текстовое поле комментариев по старинке, 
-под полями автор, почта etc 
-*/
-add_filter('comment_form_fields', 'comment_form_fields', 99);
-function comment_form_fields($fields)
-{
-  if (isset($fields['comment'])) {
-    $comment_field = $fields['comment'];
-    unset($fields['comment']);
-    $fields['comment'] = $comment_field;
-  }
-  return $fields;
-}
-
-
-/* 
-Название рубрики в разделе Популярные 
-*/
-if (!function_exists('add_popular_term')) {
-  add_action('gp_popular', 'add_popular_term');
-  function add_popular_term() {
-
-    global $post;
-
-    // массив категорий, чтобы получить id категории
-    $cat = get_the_category($post->ID);
-
-    // если записи присвоено несколько рубрик, выводим только первую, чтобы избежать переполнения
-    if (!empty($cat)) {
-      echo '<a href="' . esc_url(get_category_link($cat[0]->term_id)) . '">' . esc_html($cat[0]->name) . '</a>';
-    }
-  }
-}
-
-
-/*
-Подвал записей в разделе Популярные
-*/
-if (!function_exists('add_popular_footer')) {
-  add_action('gp_content', 'add_popular_footer');
-  function add_popular_footer() {
-
-    $author_id = get_the_author_meta('ID');
-    $author_name = get_the_author_meta('display_name');
-    $img_url = get_author_foto();
-    $date = get_the_date('d M');
-    $like_count = get_post_meta(get_the_ID(), '_post_like_count', true);
-  ?>
-
-    <div class="popular-footer">
-      <div class="popular-footer__author popular-author">
-        <a href="<?php echo esc_url(get_author_posts_url($author_id)); ?>" class="popular-author__link">
-          <img class="popular-author__img" loading="lazy" src="<?php echo esc_url($img_url); ?>" alt="<?php echo _e('Изображение автора', 'citynews-3'); ?>">
-          <?php printf('<span class="popular-author__name">' . esc_html($author_name) . '</span>'); ?>
-        </a>
-      </div>
-      <?php echo get_simple_likes_button(get_the_ID()); ?>
-    </div>
-
-  <?php
-  }
-}
-
-
-/*
-Поиск по сайту
-*/
-if (!function_exists('add_site_search')) {
-  add_action('gp_search', 'add_site_search');
-  function add_site_search() { 
-    
-    $option = TitanFramework::getInstance('cn3');
-
-    // передаем пример поискового запроса в скрипт
-    $searchTerm = $option->getOption('search-tip');
-    
-    ?>
-
-    <div class="search-panel">
-      <?php
-        get_search_form();
-        printf('<p class="search-panel__text">' . __('Что будем искать? Например', 'citynews-3') . ',');
-        printf('<span class="modal-search__hint">' . esc_html($searchTerm) . '</span></p>');
-      ?>
-
-      <button class="search-panel__close" aria-label="<?php echo _e('Закрыть поиск по сайту', 'citynews-3'); ?>"></button>
-    </div><!-- // search-panel -->
-
-    <div class="search-overlay"></div>
-
-  <?php
-  }
-}
-
-
-/*
-Функция для склонения терминов (минут, статей)
-*/
-function plural_form($number, $after) {
-  $cases = array(2, 0, 1, 1, 1, 2);
-  echo $number . ' ' . $after[($number % 100 > 4 && $number % 100 < 20) ? 2 : $cases[min($number % 10, 5)]];
-}
-
-//  убираем скобки из виджета рубрик
-function gp_categories_postcount_filter($variable) {
-  $variable = str_replace('(', '<span class="cat-item__count"> ', $variable);
-  $variable = str_replace(')', ' </span>', $variable);
-  return $variable;
-}
-
-add_filter('wp_list_categories', 'gp_categories_postcount_filter');
-
-
-
-/*
-Убираем дочерний UL из виджета рубрик
-*/
-function gp_categories_child_filter($variable) {
-  $variable = strip_tags($variable, '<li> <a> <span>');
-  return $variable;
-}
-
-add_filter('wp_list_categories', 'gp_categories_child_filter');
-
-
-/*
-Изображение записи во встроенных виджетах
-*/
-if (!function_exists('add_widget_thumbnail')) {
-  add_action('gp_widgets', 'add_widget_thumbnail');
-  function add_widget_thumbnail() {  ?>
-
-  <?php if(has_post_thumbnail()) { ?>
-    <div class="recent-artice__img zoom-img">
-      <a href="<?php echo esc_url(get_permalink()); ?>">
-      <?php
-            the_post_thumbnail('post-thumb', array(
-              'alt' => the_title_attribute(array(
-                'echo' => false,
-              )),
-            ));
-            ?>
-      </a>
-    </div><!-- // recent-artice__img  -->
-  <?php } else { ?>
-    <span class="filler"></span>
-  <?php } ?>
-  <?php
-  }
-}
-
-
-/*
-Описание архива рубрики
-*/
-if (!function_exists('add_category_description')) {
-  add_action('gp_category', 'add_category_description');
-  function add_category_description() {
-
-    $descr = get_the_archive_description();
-
-    if ($descr) :
-      echo '<div class="post-archive__content post-content">';
-
-      echo wp_kses_post($descr);
-
-      echo '</div><!-- // post-archive__content -->';
-    endif;
-  }
-}
-
-
-/*
-Список дочерних рубрик в архиве рубрики
-*/
-if (!function_exists('add_child_categories')) {
-  add_action('gp_archive', 'add_child_categories');
-  function add_child_categories() {
-    $term = get_queried_object();
-    $children = get_terms($term->taxonomy, array(
-      'parent'    => $term->term_id,
-      'hide_empty' => false
-    ));
-
-    if (!empty($children)) {
-      echo '<ul class="post-archive__child child-cat-list">';
-      foreach ($children as $subcat) {
-        echo '<li class="child-cat-list__item"><a class="child-cat-list__link" href="' . esc_url(get_term_link($subcat, $subcat->taxonomy)) . '">
-    ' . esc_html($subcat->name) . '
-    </a></li>';
-      }
-      echo '</ul>';
-    }
-  }
-}
-
-
-/*
-Мобильные соц сети
-*/
-if (!function_exists('add_mob_socilals')) {
-  add_action('gp_socials', 'add_mob_socilals');
-  function add_mob_socilals() { ?>
-
-    <div class="mob-socials-panel">
-      <p class="mob-socials-panel__text"><?php echo _e('Мы в социальных сетях', 'citynews-3'); ?></p>
-      <?php
-       get_template_part('inc/socials/social-btns');
-      ?>
-
-      <button class="mob-socials-panel__close" 
-      aria-label="<?php echo _e('Закрыть поиск по сайту', 'citynews-3'); ?>"></button>
-    </div><!-- // search-panel -->
-
-    <div class="mob-socials-overlay"></div>
-
-  <?php
-  }
-}
-
-
-/*
-Кредитсы в подвале
-*/
-if (!function_exists('add_footer_credits')) {
-  add_action('gp_footer', 'add_footer_credits');
-  function add_footer_credits() { 
-
-    $option = TitanFramework::getInstance('cn3');
-
-    // метрика с информером, если есть, или любой другой счетчик с кнопкой
-      $anyStat = $option->getOption('any-stat');
-?>
-
-    <div class="footer__credits credits">
-      <p class="credits__copy" itemprop="name"><?php bloginfo('name'); ?> &copy; <span itemprop="copyrightYear"><?php echo date('Y'); ?></span></p>
-      <span class="credits__counter">
-        <?php
-          // счетчик с кнопкой
-          echo $anyStat;
-        ?>
-      </span>
-      <span class="credits__site-descr" itemprop="description"><?php bloginfo('description'); ?></span>
-    </div><!-- // footer-credits -->
-
-  <?php
-  }
-}
-
-
-/*
-Скрипт подсказки в поисковой форме
-*/
-if (!function_exists('add_search_hint')) {
-  add_action('gp_footer', 'add_search_hint');
-  function add_search_hint() {
-
-    $option = TitanFramework::getInstance('cn3');
-
-    // передаем пример поискового запроса в скрипт
-    $searchTerm = $option->getOption('search-tip');
-
-  ?>
-
-    <script>
-      /* <![CDATA[ */
-      
-      const searchHint = document.querySelector('.modal-search__hint');
-      const searchField = document.querySelector('.search-panel .search-field');
-
-      searchHint.addEventListener('click', () => {
-        searchField.setAttribute('value', '<?php echo esc_attr($searchTerm); ?>');
-      });
-
-      /* ]]> */
-    </script>
-
-<?php
-  }
-}
-
-
-/*
-Микроразметка schema.org для записей
-*/
-if (!function_exists('add_article_microdata')) {
-  add_action('gp_article', 'add_article_microdata');
-  function add_article_microdata() {
-
-    $option = TitanFramework::getInstance('cn3');
-
-        // id фавикона  для микроразметки
-        $siteIcon = $option->getOption('favicon');
-
-        // населенный пункт для микроразметки
-        $area = $option->getOption('mircodata-area');
-
-        // телефон для микроразметки
-        $phone = $option->getOption('mircodata-tel');
-
-    // используем фавикон для поля logo, чтобы не плодить сущности
-    if (is_numeric($siteIcon)) {
-      $imageAttachment = wp_get_attachment_image_src($siteIcon, $size = 'full');
-      $imageSrc = $imageAttachment[0];
-    } else {
-      $imageSrc = $siteIcon;
-    }
-
-    // используем изображение записи для полей img
-    if (has_post_thumbnail()) {
-      $thumb = get_post_thumbnail_id();
-      $image_attributes = wp_get_attachment_image_src($thumb, 'full');
-      $micro_img = '<link itemprop="url image" href=" ' . $image_attributes[0] . '"> <meta itemprop="width" content="' . $image_attributes[1] . '"> <meta itemprop="height" content="' . $image_attributes[2] . '">';
-    } else {
-      $micro_img = '<link itemprop="url image" href=" ' . get_template_directory_uri() . '/assets/img/demo/icon.svg"> <meta itemprop="width" content="100"> <meta itemprop="height" content="100">';
-    }
-
-    $microdata = '<div style="display:none" class="microdata"> <meta itemprop="headline" content="' . get_the_title() . '">
-
-      <div itemprop="author" itemscope itemtype="https://schema.org/Person">
-        <meta itemprop="name" content="' . get_bloginfo('name') . '">
-        <link itemprop="url" href="' . home_url() . '">
-      </div><!-- // Person -->
-    
-      <meta itemprop="datePublished" content="' . get_the_time('c') . '">
-      <meta itemprop="dateModified" content="' . get_the_time('Y-m-d') . '">
-      <link itemscope itemprop="mainEntityOfPage" itemtype="https://schema.org/WebPage" href="' . get_permalink() . '">
-
-      <div itemprop="image" itemscope itemtype="https://schema.org/ImageObject">' . $micro_img  . '</div>
-
-      <div itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
-      
-        <meta itemprop="name" content="' . get_bloginfo('name') . '">
-        <div itemprop="logo" itemscope  itemtype="https://schema.org/ImageObject">
-          <link itemprop="url image" href="' . esc_url($imageSrc) . '">
-          <meta itemprop="width" content="100">
-          <meta itemprop="height" content="100">
-        </div><!-- // ImageObject -->
-      
-      <div itemprop="image" itemscope itemtype="https://schema.org/ImageObject">' .  $micro_img  . '</div>
-      
-      <meta itemprop="telephone" content="' . esc_attr($phone) . '">
-      <meta itemprop="address" content="' . esc_attr($area) . '"> 
-      
-    </div><!-- // Organization -->
-    </div><!-- // microdata -->';
-
-    echo $microdata;
-  }
-}
-
-/*
-* Снимаем блокировку кнопки каментов, если в консоли отключен
-* показ политики конфиденциальности
-* Добавлено в версии 1.0.1
-*/
-if (!function_exists('remove_comment_btn_disabled')) {
-  add_action('gp_comments', 'remove_comment_btn_disabled');
-  function remove_comment_btn_disabled()
-  {
-
-    $option = TitanFramework::getInstance('cn3');
-    if (comments_open()) {
-      if ($option->getOption('agree-loc') == 2) :
-    ?>
-        <script>
-          /* <![CDATA[ */
-          jQuery(document).ready(function($) {
-          $(function() {
-            var subBtn = $('.comment-form .submit');
-            $(subBtn).removeAttr('disabled');
-          });
-        });
-          /* ]]> */
-        </script>
-    <?php endif;
-    }
-  }
-}
+</p>'
+	));
+
+
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Общие настройки',
+		'id' => 'general-options',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Здесь настроим элементы, общие для всего сайта - фавикон, персональные данные, статистику и т.д.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Favicon',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Favicon - установить',
+		'id' => 'favicon',
+		'type' => 'upload',
+		'desc' => 'Создайте изображение с нужным рисунком, сохраните в формате png или svg и загрузите его здесь. Рекомендуемый размер - 192х192 пикс.',
+		'default' => '/wp-content/themes/citynews-3/assets/img/demo/icon.svg',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Верификация сайта в Яндекс и Google',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'HTML-тэг для подтверждения прав на сайт',
+		'id' => 'verification',
+		'type' => 'textarea',
+		'desc' => 'Если нужно подтвердить права на сайт в Яндексе и Гугле, это можно сделать здесь, разместив в данное поле код предложенных вам html метатэгов. Они будут выводиться в разделе head. <br />Также в это поле можно добавлять любой другой код, который требуется разместить на сайте в зоне head.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Cтатистика и аналитика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Статистика Google Analytics',
+		'id' => 'google-stat',
+		'type' => 'textarea',
+		'desc' => 'Если вы используете статистику от Google Analytics, вставьте код статистики в это поле. Другие счетчики сюда ставить не рекомендуется. Выводится в шапке в зоне head.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Статистика без кнопки - Яндекс.Метрика',
+		'id' => 'yandex-stat',
+		'type' => 'textarea',
+		'desc' => 'Если вы используете статистику Яндекс.Метрика, вставьте код статистики в это поле.  Какие-либо другие счетчики сюда ставить не рекомендуется. Выводится внутри body, максимально высоко к открывающему тэгу.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Любая статистика с кнопкой',
+		'id' => 'any-stat',
+		'type' => 'textarea',
+		'desc' => 'Если у вас имеется  счетчик  с кнопкой типа LiveInternet или Mail.ru, кнопка каталога, или Яндекс Метрика с кнопкой-информером,  поставьте их код в это поле. Выводится в подвале по центру.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Пиксель ВКонтакте или пиксель Facebook',
+		'id' => 'pixel',
+		'type' => 'textarea',
+		'desc' => 'Если у вас есть код Пикселя ВКонтакте или Facebook, поставьте его / их в это поле. Выводится в шапке в зоне head.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '404 страница',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '404 - текст',
+		'id' => 'text404',
+		'type' => 'editor',
+		'desc' => 'Впишите свой текст для 404 страницы или используйте текст по умолчанию.',
+		'default' => 'Дорогой посетитель, вы попали на 404 страницу. Это значит, что документ, который раньше открывался по этому адресу, более не существует, либо был перемещен. Также есть вероятность, что вы использовали неправильную ссылку.',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Поиск по сайту',
+		'type' => 'heading',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Подсказка для поиска',
+		'id' => 'search-tip',
+		'type' => 'text',
+		'desc' => 'Впишите слово или фразу для установки в качестве примера или подсказки в поп-апе поиска.',
+		'default' => 'Человек',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Микроразметка',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Тема оснащена микроразметкой по стандарту schema.org. Страницы записей описаны как Article. Микроразметка под Article требует, чтобы в свойстве publisher были указаны населенный пункт, к которому относится сайт, а также контактный телефон владельца. Заполните соответствующие поля, внесенные значения будут использованы в микроразметке. Данные значения могут быть как реальными, так и вымышленными, на ваше усмотрение.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Населенный пункт',
+		'id' => 'mircodata-area',
+		'type' => 'text',
+		'desc' => 'Впишите название населенного пункта, к которому относится сайт.',
+		'default' => 'Санкт-Петербург',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Номер телефона',
+		'id' => 'mircodata-tel',
+		'type' => 'text',
+		'desc' => 'Впишите номер телефона владельца или автора сайта.',
+		'default' => '+7(123)456-78-90',
+	));
+
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Социальные сети',
+		'id' => 'social-options',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'В теме имеется 3 набора кнопок соц. сетей. Первый для перехода в ваши аккаунты в соц. сетях - на ПК выводится в шапке сайта, а также в моб. меню и специальном поп-апе; второй  - чтобы посетители могли поделиться публикациями и продуктами сайта в соц. сетях или мессенджерах - выводится в каждой записи под текстом публикации; третий - соц. аккаунты авторов сайта, выводятся в архиве автора. <br />Первые два набора можно настроить здесь. Соц. кнопки автора у каждого свои, поэтому они настраиваются не здесь, а в профиле автора в админке. ',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Ваши аккаунты в соц. сетях',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'ВКонтакте - включить',
+		'id' => 'vk-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Включить ссылку ВКонтакте',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'ВКонтакте - ссылка',
+		'id' => 'vk-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашей страницы ВКонтакте.',
+		'default' => 'https://vk.com',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Facebook - включить',
+		'id' => 'fb-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Включить ссылку Facebook',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Facebook - ссылка',
+		'id' => 'fb-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашей страницы на Facebook.',
+		'default' => 'https://facebook.com',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Instagram - включить',
+		'id' => 'inst-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Включить ссылку Instagram',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Instagram - ссылка',
+		'id' => 'inst-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашей страницы в Instagram',
+		'default' => 'https://instagram.com',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'YouTube - включить',
+		'id' => 'yt-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Включить ссылку YouTube',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'YouTube - ссылка',
+		'id' => 'yt-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашего канала  в YouTube',
+		'default' => 'https://youtube.com',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Twitter - включить',
+		'id' => 'tw-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Включить ссылку Twitter',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Twitter - ссылка',
+		'id' => 'tw-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашей страницы в Twitter.',
+		'default' => 'https://twitter.com',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Одноклассники - включить',
+		'id' => 'od-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Включить ссылку Одноклассники',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Одноклассники - ссылка',
+		'id' => 'od-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашего аккаунта в Одноклассниках',
+		'default' => 'https://odnoklassniki.ru',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Дзен - включить',
+		'id' => 'zen-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Включить кнопку Яндекс Дзен',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Дзен - ссылка',
+		'id' => 'zen-link',
+		'type' => 'text',
+		'desc' => 'Разместите адреc Вашего аккаунта в Дзен',
+		'default' => 'https://zen.yandex.ru',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Telegram - включить',
+		'id' => 'tg-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Включить ссылку Telegram',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Telegram - ссылка',
+		'id' => 'tg-link',
+		'type' => 'text',
+		'desc' => 'Разместите имя пользователя или название канала в Telegram. Например, goodwinpress',
+		'default' => 'goodwinpress',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопки Поделиться',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Заголовок',
+		'id' => 'share-title',
+		'type' => 'text',
+		'desc' => 'Разместите подзаголовок, призыв поделиться в соц. сетях.',
+		'default' => 'Поделитесь с друзьями',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопки Поделиться',
+		'id' => 'share-options',
+		'type' => 'multicheck',
+		'desc' => 'Выберите, какие кнопки желаете использовать. С их помощью посетитель сможет поделиться записью или продуктом в социальных сетях и мессенджерах.',
+		'options' => array(
+			'wh' => 'WhatsApp',
+			'vk' => 'ВКонтакте',
+			'fb' => 'Facebook',
+			'tg' => 'Telegram',
+			'tw' => 'Twitter',
+			'od' => 'Одноклассники',
+			'vb' => 'Viber',
+		),
+		'default' => array('wh', 'fb', 'tg')
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Шапка сайта',
+		'id' => 'header',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Настроим брендинг сайта, а также разные кнопки.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Заголовок / логотип',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Что разместить',
+		'id' => 'site-title',
+		'type' => 'select',
+		'desc' => 'Выберите, текст или логотип. <br />Если выбран логотип, загрузите его ниже.<br />Если выбран текст, в шапке будет выводиться текстовый заголовок, заданный вами в <a target="_blank" href="options-general.php">настройках сайта</a>',
+		'options' => array(
+			'1' => 'Текст',
+			'2' => 'Логотип',
+		),
+		'default' => '2',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Логотип для светлого режима',
+		'id' => 'site-logo',
+		'type' => 'upload',
+		'desc' => 'Загрузите здесь  логотип для обычного, светлого режима. <br />Размер любой, рекомендованный размер 300х75 пикселей. Тип любой - png, jpg или svg.',
+		'default' => '/wp-content/themes/citynews-3/assets/img/demo/cn3-logo-light.svg'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Логотип для темного режима',
+		'id' => 'site-logo-dark',
+		'type' => 'upload',
+		'desc' => 'Загрузите здесь логотип для темного режима. <br />Размер любой, рекомендованный размер 300х75 пикселей. Тип любой - png, jpg или svg.',
+		'default' => '/wp-content/themes/citynews-3/assets/img/demo/cn3-logo-dark.svg'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Если логотип в svg',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Если логотип в формате svg, здесь пропишите ширину и высоту этого логотипа - WordPress пока не может автоматически установить данные параметры, поскольку это векторная графика.<br />Если логотип в png, webp или jpg, WordPress сам определит его размеры и подставит их в код, никаких действий не требуется, оставьте поля пустыми.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Ширина',
+		'id' => 'svg-logo-width',
+		'type' => 'text',
+		'desc' => 'Укажите ширину для svg логотипа в пикселях. Например, 300',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Высота',
+		'id' => 'svg-logo-height',
+		'type' => 'text',
+		'desc' => 'Укажите высоту для svg логотипа в пикселях. Например, 75',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Социальные сети в шапке',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Добавить соц. сети?',
+		'id' => 'header-socials-loc',
+		'type' => 'enable',
+		'desc' => 'Набор кнопок социальных сетей в шапке, слева от логотипа, вкл / выкл. Если кнопки выключены, лого получит размещение по левому краю. ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопки в шапке',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопка темного режима',
+		'id' => 'dark-mode-loc',
+		'type' => 'enable',
+		'desc' => 'Кнопка включения темного режима, вкл / выкл. ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопка и поп-ап поиска',
+		'id' => 'search-btn-loc',
+		'type' => 'enable',
+		'desc' => 'Кнопка, открывающая поп-ап с формой поиска, вкл / выкл. Если кнопка выключена, вместе с ней скрыт и поп-ап. ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопка и поп-ап соц. сетей (в моб. версии)',
+		'id' => 'mob-socials-btn-loc',
+		'type' => 'enable',
+		'desc' => 'Кнопка, открывающая поп-ап с кнопками соц. сетей, вкл / выкл. Если кнопка выключена, вместе с ней скрыт и поп-ап. ',
+		'default' => true,
+	));
+
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Главная страница',
+		'id' => 'homepage-options',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Разделы Главной страницы',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Если желаете создать журнальный, новостной сайт - включите все разделы, кроме Блога.<br />Если желаете создать блог, статейный сайт - включите раздел Блог, остальные отключите. <br /> Комбинируйте, как захотите. Например, можно включить Блог и добавить к нему Рубрику 1, Популярные и Избранные записи и т.п.',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Из каких частей состоит Главная',
+		'id' => 'sections',
+		'type' => 'sortable',
+		'desc' => 'Готовые разделы Главной страницы. Расположите их в нужном порядке. Комбинируйте. Ненужные отключите.<br /><br />',
+		'options' => array(
+			'section-1' => 'Рубрика 1',
+			'section-2' => 'Свежие записи + Рубрика 2',
+			'section-3' => 'Рубрика 3',
+			'section-authors' => 'Авторы',
+			'section-4' => 'Рубрика 4',
+			'section-5' => 'Рубрика 5',
+			'section-popular' => 'Популярные записи',
+			'section-6' => 'Рубрика 6',
+			'section-7' => 'Рубрика 7',
+			'section-8' => 'Рубрика 8',
+			'section-blog' => 'Блог',
+			'section-featured' => 'Избранные записи',
+		),
+
+		'default' => array('section-blog')
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Даты и лайки на Главной',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Здесь можно выключить отображение даты публикации записей и лайков во всех разделах Главной страницы - как в журнальном варианте, так и в блоге.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать дату?',
+		'id' => 'mag-date-loc',
+		'type' => 'enable',
+		'desc' => 'Дата публикации записи, вкл / выкл. ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать лайки?',
+		'id' => 'mag-likes-loc',
+		'type' => 'enable',
+		'desc' => 'Счетчик лайков записи, вкл / выкл. ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Настройка рубрик и блога',
+		'id' => 'homepage-categories-options',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Если используете тему как новостной сайт (когда публикации на Главной разбиты по рубрикам), здесь можно задать нужные рубрики. Откройте выпадающий список и установите для каждого раздела свою рубрику.',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => '1 рубрика (4 записи)',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Выбрать рубрику',
+		'id' => 'cat1',
+		'type' => 'select-categories',
+		'desc' => '',
+		'default' => '',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => '2 рубрика + Свежие записи',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Выбрать рубрику',
+		'id' => 'cat2',
+		'type' => 'select-categories',
+		'desc' => '',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat2-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное двум, например, 4, 6, 8 и т.д. <br /> Для создания гармоничного вида, следите за тем, чтобы у рубрики была такая же высота, как у Свежих записей слева.',
+		'default' => '4',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество Свежих записей',
+		'id' => 'cat2-recent-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей в колонке Свежих записей. <br /> Для создания гармоничного вида, следите за тем, чтобы у блока Свежих записей была такая же высота, как у рубрики справа.',
+		'default' => '5',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '3 рубрика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '3 рубрика',
+		'id' => 'cat3',
+		'type' => 'select-categories',
+		'desc' => 'Выбрать рубрику.',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat3-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное трем, например, 3, 6, 9 и т.д.',
+		'default' => '3',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '4 рубрика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '4 рубрика',
+		'id' => 'cat4',
+		'type' => 'select-categories',
+		'desc' => '',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat4-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное трем, например, 3, 6, 9 и т.д.',
+		'default' => '3',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '5 рубрика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '5 рубрика',
+		'id' => 'cat5',
+		'type' => 'select-categories',
+		'desc' => '',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat5-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное трем, например, 3, 6, 9 и т.д.',
+		'default' => '3',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '6 рубрика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '6 рубрика',
+		'id' => 'cat6',
+		'type' => 'select-categories',
+		'desc' => ' ',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat6-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное трем, например, 3, 6, 9 и т.д.',
+		'default' => '3',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '7 рубрика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '7 рубрика',
+		'id' => 'cat7',
+		'type' => 'select-categories',
+		'desc' => ' ',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat7-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное трем, например, 3, 6, 9 и т.д.',
+		'default' => '3',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '8 рубрика',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => '8 рубрика',
+		'id' => 'cat8',
+		'type' => 'select-categories',
+		'desc' => ' ',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей в рубрике',
+		'id' => 'cat8-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько записей выводить в рубрике. Лучшее количество - кратное трем, например, 3, 6, 9 и т.д.',
+		'default' => '3',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Популярные записи',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Блок, в котором выводим список наиболее популярных записей. Популярность определяется на основе лайков темы, самые "залайканные" посты выводятся сверху.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Заголовок раздела',
+		'id' => 'popular-title',
+		'type' => 'text',
+		'desc' => 'Укажите заголовок раздела.',
+		'default' => 'Популярное',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей',
+		'id' => 'popular-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько популярных записей показывать. Лучшее количество - кратное двум, например, 2, 4, 6 и т.д.',
+		'default' => '4',
+		'min' => '1',
+		'max' => '12',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Авторы',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Блок, в котором представляем список авторов сайта. Вывод производится на основе количества публикаций. Автор, у которого больше публикаций, выводится первым.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Заголовок раздела',
+		'id' => 'authors-title',
+		'type' => 'text',
+		'desc' => 'Укажите заголовок раздела.',
+		'default' => 'Наши авторы',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Исключить авторов',
+		'id' => 'remove-author',
+		'type' => 'text',
+		'desc' => 'Если нужно исключить какого-либо автора, например, админа или кого-то другого, сделайте это здесь. Укажите ID этого автора, тогда он не будет выводиться в данном блоке. Если требуется исключить нескольких авторов сразу, укажите их ID через запятую.',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Избранные записи',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Блок, в котором выводим список так называемых избранных записей. Чтобы сделать запись избранной и вывести ее на Главной, поставьте галочку в ее настройках. <br />Количество избранных записей не ограничено. Вывод записей - стандартный, по дате публикации.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Заголовок раздела',
+		'id' => 'featured-title',
+		'type' => 'text',
+		'desc' => 'Укажите заголовок раздела.',
+		'default' => 'Избранное',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Блог',
+		'type' => 'heading',
+	));
+	
+	$normalPanel->createOption(array(
+		'name' => 'Тип навигации в Блоге',
+		'id' => 'blog-nav-type',
+		'type' => 'radio',
+		'options' => array(
+			'1' => 'Загрузка по клику на кнопку',
+			'2' => 'Стандартная постраничная навигация с цифрами',
+		),
+		'default' => '1',
+		'desc' => 'Выберите тип навигации в блоге - загружать новую порцию постов по клику на кнопку "Загрузить" или выводить стандартную постраничную навигация через номера страниц. '
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Настройка записей',
+		'id' => 'posts-options',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Настройка публикаций сайта.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Шапка записи',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Блок с датой и автором',
+		'id' => 'single-date-author-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать блок с датой и автором в шапке записи, вкл / выкл.',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать время на чтение',
+		'id' => 'single-reading-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать время на чтение в шапке записи, вкл / выкл.',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать количество комментариев',
+		'id' => 'single-comments-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать количество комментариев в шапке записи, вкл / выкл.',
+		'default' => true,
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать лайки',
+		'id' => 'single-like-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать лайки в шапке записи, вкл / выкл.',
+		'default' => true,
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Содержимое записи',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Изображение внутри записи',
+		'id' => 'featured-img-loc',
+		'type' => 'enable',
+		'desc' => 'Выводить Изображение записи внутри самой публикации, под шапкой, вкл / выкл ',
+		'default' => false,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Произвольный контент',
+		'id' => 'custom-content-loc',
+		'type' => 'enable',
+		'desc' => 'Блок для размещения произвольного контента в нижней части записей, вкл / выкл ',
+		'default' => false,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Разместить контент',
+		'id' => 'custom-content',
+		'type' => 'editor',
+		'desc' => 'Поставьте здесь любой контент, например - текст, рекламный баннер, форму подписки, изображение и т.п. Блок поддерживает вывод разметки и шорткодов. Обычный текст пишем на вкладке "Визуально". Какой-либо код добавляем на вкладке "Текст".',
+		'default' => '',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Подвал записи',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Метки',
+		'id' => 'single-tags-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать блок с метками (тэгами) в подвале записи, вкл / выкл ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Поделиться в соц. сетях',
+		'id' => 'single-social-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать блок c кнопками "Поделиться" в подвале записи, вкл / выкл ',
+		'default' => true,
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать лайки',
+		'id' => 'single-footer-like-loc',
+		'type' => 'enable',
+		'desc' => 'Показывать лайки в подвале записи, вкл / выкл.',
+		'default' => true,
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Обсуждение',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Комментарии в записях',
+		'id' => 'comments-post-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Выключить показ комментариев и формы отправки во всех записях',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Комментарии на страницах',
+		'id' => 'comments-page-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Выключить показ комментариев и формы отправки на всех страницах.',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Если комментарии включены здесь, но на сайте не появились, это значит, что ранее вы отключили комментирование избирательно, вручную, через движок, в настройках самой записи или страницы.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Спойлер для комментариев',
+		'id' => 'comments-spoiler-loc',
+		'type' => 'radio',
+		'desc' => 'Если комментарии включены, показывать их как есть или убрать в спойлер, под кнопку:',
+		'options' => array(
+			'1' => 'Убрать в спойлер',
+			'2' => 'Оставить как есть',
+		),
+		'default' => '1',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Персональные данные',
+		'id' => 'agree-loc',
+		'type' => 'radio',
+		'options' => array(
+			'1' => 'Включить подтверждение',
+			'2' => 'Не включать',
+		),
+		'default' => '1',
+		'desc' => 'Оповещение посетителя о том, что он дает согласие на сбор и обработку своих персональных данных при отправке комментариев. Выводится в форме комментариев для посетителей, для залогиненного админа не выводится.'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Ссылка на текст соглашения',
+		'id' => 'policy-url',
+		'type' => 'text',
+		'desc' => 'Если оповещение включено, здесь разместите  адрес страницы с вашей политикой конфиденциальности. Не забываем http:// или https://',
+		'default' => '',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Еще из той же рубрики',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Похожие записи',
+		'id' => 'related-posts-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Записи из той же рубрики, на ту же тему, для удержания посетителя.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Количество записей',
+		'id' => 'related-posts-count',
+		'type' => 'number',
+		'desc' => 'Установите, сколько выводить похожих записей. Лучшее количество - кратное двум, например, 2, 4, 6 и т.д.',
+		'default' => '4',
+		'min' => '1',
+		'max' => '10',
+		'step' => '1'
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Отключить подвал в ячейке',
+		'id' => 'related-footer-loc',
+		'type' => 'checkbox',
+		'default' => false,
+		'desc' => 'Поставьте галочку, чтобы выключить в ячейках похожих записей вывод подвала с датой и лайком. ',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Что еще почитать',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Случайные записи',
+		'id' => 'random-posts-loc',
+		'type' => 'enable',
+		'default' => false,
+		'desc' => 'Публикации для дополнительного чтения и направления трафика не только к новым записям, выбранные в случайном порядке. Выводятся в нижней части, над подвалом. 3 на ПК, 4 на моб.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Отключить подвал в ячейке',
+		'id' => 'random-footer-loc',
+		'type' => 'checkbox',
+		'default' => false,
+		'desc' => 'Поставьте галочку, чтобы выключить в ячейках случайных записей вывод подвала с датой и лайком. ',
+	));
+
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Подвал сайта',
+		'id' => 'footer-options',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Показывать подвал',
+		'id' => 'footer-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Показывать подвал сайта, состоящий из блока "О сайте" и колонки виджетов, вкл / выкл. ',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'О сайте',
+		'id' => 'footer-content',
+		'type' => 'editor',
+		'desc' => 'Разместите описание сайта, для людей или поисковых ботов, или контактную информацию. Блок поддерживает шорткоды.',
+		'default' => 'Разместите описание сайта, для людей или поисковых ботов, или контактную информацию. Блок поддерживает шорткоды.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Социальные сети',
+		'id' => 'footer-socials-loc',
+		'type' => 'enable',
+		'default' => true,
+		'desc' => 'Показывать кнопки соц. сетей, вкл / выкл. ',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Меню в подвале',
+		'id' => 'footer-nav-loc',
+		'type' => 'checkbox',
+		'default' => false,
+		'desc' => 'Поставьте галочку, чтобы показывать меню в блоке О сайте. <br />Если включено, создайте в админке новое короткое одноуровневое меню и там же назначьте его на вывод в подвале.',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+
+	$normalPanel = $adminPanel->createAdminPanel(array(
+		'name' => 'Оформление',
+		'id' => 'style-options',
+	));
+
+	$normalPanel->createOption(array(
+		'type' => 'note',
+		'desc' => 'Здесь вы можете изменить цвета компонентов темы, перекрасить под себя. Подробнее об оформлении см в инструкции.',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Браузер',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Цвет темы браузера',
+		'id' => 'browser-theme',
+		'type' => 'color',
+		'desc' => 'Цвет темы браузера, в котором просматривается сайт (функция поддерживается не во всех браузерах и не на всех устройствах!).',
+		'default' => '#1c59bc',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Общие',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон сайта',
+		'id' => 'body-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона вокруг контейнера сайта',
+		'default' => '#f2f2f5',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Цвет шрифта сайта',
+		'id' => 'body-color',
+		'type' => 'color',
+		'desc' => 'Цвет текстов сайта',
+		'default' => '#333646',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Ссылки при наведении мыши: цвет шрифта',
+		'id' => 'hover',
+		'type' => 'color',
+		'desc' => 'Цвет ссылки при наведении мыши (hover).',
+		'default' => '#1c59bc',
+	));
+
+
+	$normalPanel->createOption(array(
+		'name' => 'Кнопки',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон кнопки',
+		'id' => 'btn-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона кнопки.',
+		'default' => '#1c59bc',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Текст на кнопке',
+		'id' => 'btn-color',
+		'type' => 'color',
+		'desc' => 'Цвет шрифта текста кнопки.',
+		'default' => '#ffffff',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон кнопки при наведении мыши',
+		'id' => 'btn-bg-hov',
+		'type' => 'color',
+		'desc' => 'Цвет фона кнопки при наведении мыши.',
+		'default' => '#152b8e',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Меню',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон выпадающего меню',
+		'id' => 'nav-drop-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона дочернего (выпадающего меню).',
+		'default' => '#333646',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Цвет текста в выпадающем меню',
+		'id' => 'nav-drop-color',
+		'type' => 'color',
+		'desc' => 'Цвет текста в пунктах выпадающего меню.',
+		'default' => '#ffffff',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Цвет подсветки в выпадающем меню ',
+		'id' => 'nav-drop-bg-hov',
+		'type' => 'color',
+		'desc' => 'Цвет фона подсветки пунктов выпадающего меню при наведении мыши (hover).',
+		'default' => '#535770',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон липкого меню',
+		'id' => 'sticky-nav-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона липкого меню.',
+		'default' => '#333646',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Шрифт липкого меню',
+		'id' => 'sticky-nav-color',
+		'type' => 'color',
+		'desc' => 'Цвет текста в пунктах липкого меню.',
+		'default' => '#f7f6fb',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Разделы Главной',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон разделов Авторы и Популярные',
+		'id' => 'section-alt-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона разелов Авторы и Популярные записи, для контраста.',
+		'default' => '#f4f6fb',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Декор',
+		'type' => 'heading',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Бордюр цитаты',
+		'id' => 'blquote-border',
+		'type' => 'color',
+		'desc' => 'Цвет бокового бордюра цитаты в тексте записи.',
+		'default' => '#57e',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон "наклеек" в виджете Популярные',
+		'id' => 'pop-widget-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона "наклеек" с порядковыми номерами в виджете Популярные записи.',
+		'default' => '#57e',
+	));
+
+	$normalPanel->createOption(array(
+		'name' => 'Фон "наклеек" в виджете рубрики',
+		'id' => 'feat-widget-bg',
+		'type' => 'color',
+		'desc' => 'Цвет фона "наклеек" с порядковыми номерами в виджете одной выбранной рубрики.',
+		'default' => '#e7327d',
+	));	
+
+	$normalPanel->createOption(array(
+		'type' => 'save',
+	));
+} 
 
 // EOF
